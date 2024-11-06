@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:routine_app/screen/statistics_screen.dart';
+import 'package:routine_app/screens/statistics_screen.dart';
 
 import 'home_screen.dart';
 import 'routines_screen.dart';
@@ -31,7 +31,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],  // Affiche l'écran en fonction de l'index
+      body: _pages[_selectedIndex], // Affiche l'écran en fonction de l'index
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
