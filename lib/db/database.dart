@@ -63,13 +63,29 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE Completion (
         id INTEGER PRIMARY KEY,
-        stateId INTEGER NOT NULL,
+        state BOOLEAN,
         description TEXT,
         image TEXT,
         routineId INTEGER NOT NULL,
         FOREIGN KEY (stateId) REFERENCES State (id),
         FOREIGN KEY (routineId) REFERENCES Routine (id)
       )
+    ''');
+
+    await seed();
+  }
+
+  // Seed
+  Future<void> seed() async {
+    final db = await instance.database;
+
+    await db.rawInsert('''
+      INSERT INTO Frequency (id, label) VALUES
+        (1, 'Quotidienne'),
+        (2, 'Hebdomadaire'),
+        (3, 'Mensuelle'),
+        (4, 'Annuelle'),
+        (5, 'Une fois');
     ''');
   }
 }
