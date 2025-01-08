@@ -5,11 +5,11 @@ class DatabaseHelper {
   static final _databaseName = "routines_app.db";
   static final _databaseVersion = 1;
 
-  // make this a singleton class
+  // Singleton instance
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
-  // only have a single app-wide reference to the database
+  // Database reference
   static Database? _database;
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -17,7 +17,7 @@ class DatabaseHelper {
     return _database!;
   }
 
-  // this opens the database (and creates it if it doesn't exist)
+  // Initialize database
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _databaseName);
@@ -29,6 +29,7 @@ class DatabaseHelper {
     );
   }
 
+  // Create database schema
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE Frequency (
@@ -46,7 +47,7 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE Routine (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         startDate TEXT NOT NULL,
         endDate TEXT,
@@ -62,8 +63,8 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE Completion (
-        id INTEGER PRIMARY KEY,
-        state BOOLEAN,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        stateId INTEGER NOT NULL,
         description TEXT,
         image TEXT,
         routineId INTEGER NOT NULL,
@@ -72,20 +73,80 @@ class DatabaseHelper {
       )
     ''');
 
-    await seed();
+    // Seed the database
+    await _seedDatabase(db);
   }
 
-  // Seed
-  Future<void> seed() async {
-    final db = await instance.database;
-
+  // Seed initial data
+  Future<void> _seedDatabase(Database db) async {
+    // Insert frequencies
     await db.rawInsert('''
       INSERT INTO Frequency (id, label) VALUES
         (1, 'Quotidienne'),
         (2, 'Hebdomadaire'),
         (3, 'Mensuelle'),
         (4, 'Annuelle'),
-        (5, 'Une fois');
+        (5, 'Une fois')
     ''');
+
+    // Insert states
+    await db.rawInsert('''
+      INSERT INTO State (id, label) VALUES
+        (1, 'Non Complété'),
+        (2, 'Partiellement Complété'),
+        (3, 'Complété')
+    ''');
+
+    // Insert routines (optimized multi-line insert)
+    await db.rawInsert('''
+      INSERT INTO Routine (name, startDate, endDate, icon, description, alert, frequencyId, recurrence, days)
+      VALUES
+        ('Routine Matin', '2025-01-01', '2025-01-31', '☀️', 'Commencez votre journée avec de l’énergie.', NULL, 1, 1, '1,2,3,4,5'),
+        ('Routine Soir', '2025-01-01', '2025-01-31', '🌙', 'Relaxez-vous après une longue journée.', NULL, 1, 1, '1,2,3,4,5'),
+        ('Routine Lecture', '2025-01-01', '2025-01-15', '📚', 'Prenez du temps pour lire.', NULL, 3, 1, '6,7'),
+        ('Routine Sport', '2025-01-01', '2025-01-20', '🏋️‍♀️', 'Restez en forme physiquement.', NULL, 2, 2, '1,3,5')
+    ''');
+  }
+
+  // CRUD Operations for Routines
+  Future<List<Map<String, dynamic>>> getRoutines() async {
+    final db = await database;
+    return await db.query('Routine');
+  }
+
+  Future<int> insertRoutine(Map<String, dynamic> routine) async {
+    final db = await database;
+    return await db.insert('Routine', routine);
+  }
+
+  Future<int> updateRoutine(int id, Map<String, dynamic> routine) async {
+    final db = await database;
+    return await db.update('Routine', routine, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteRoutine(int id) async {
+    final db = await database;
+    return await db.delete('Routine', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // CRUD Operations for Completions
+  Future<List<Map<String, dynamic>>> getCompletions() async {
+    final db = await database;
+    return await db.query('Completion');
+  }
+
+  Future<int> insertCompletion(Map<String, dynamic> completion) async {
+    final db = await database;
+    return await db.insert('Completion', completion);
+  }
+
+  Future<int> updateCompletion(int id, Map<String, dynamic> completion) async {
+    final db = await database;
+    return await db.update('Completion', completion, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteCompletion(int id) async {
+    final db = await database;
+    return await db.delete('Completion', where: 'id = ?', whereArgs: [id]);
   }
 }

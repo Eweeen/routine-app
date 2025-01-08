@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:routine_app/providers/completionProvider.dart';
+import 'package:routine_app/providers/routineProvider.dart';
 import 'package:routine_app/screens/main_screen.dart';
+import 'package:provider/provider.dart';
+import 'db/database.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // Initialiser la base de données
+    await DatabaseHelper.instance.database;
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => RoutineProvider()),
+        ChangeNotifierProvider(create: (_) => CompletionProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -13,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainScreen(),
+      home: const MainScreen(), // Écran principal
     );
   }
 }
