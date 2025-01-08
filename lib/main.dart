@@ -6,16 +6,11 @@ import 'package:provider/provider.dart';
 import 'db/database.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Assure l'initialisation
+    WidgetsFlutterBinding.ensureInitialized();
 
-  final dbHelper = DatabaseHelper.instance;
+    // Initialiser la base de données
+    await DatabaseHelper.instance.database;
 
-  // Faker : Insérer des routines dans la base de données
-  await dbHelper.insertFakeRoutines(10);
-  final routines = await dbHelper.getRoutines();
-  for (final routine in routines) {
-    print(routine);
-  }
   runApp(
     MultiProvider(
       providers: [

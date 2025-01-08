@@ -1,4 +1,3 @@
-import 'package:routine_app/db/seed/routineSeed.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -6,9 +5,11 @@ class DatabaseHelper {
   static final _databaseName = "routines_app.db";
   static final _databaseVersion = 1;
 
+  // Singleton instance
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
+  // Database reference
   static Database? _database;
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -16,6 +17,7 @@ class DatabaseHelper {
     return _database!;
   }
 
+  // Initialize database
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _databaseName);
@@ -27,6 +29,7 @@ class DatabaseHelper {
     );
   }
 
+  // Create database schema
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE Frequency (
@@ -44,7 +47,7 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE Routine (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         startDate TEXT NOT NULL,
         endDate TEXT,
@@ -60,7 +63,7 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE Completion (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         stateId INTEGER NOT NULL,
         description TEXT,
         image TEXT,
@@ -70,18 +73,42 @@ class DatabaseHelper {
       )
     ''');
 
-    await _seed(db);
+    // Seed the database
+    await _seedDatabase(db);
   }
 
-  Future<void> _seed(Database db) async {
-    await db.insert('Frequency', {'id': 1, 'label': 'Quotidienne'});
-    await db.insert('Frequency', {'id': 2, 'label': 'Hebdomadaire'});
-    await db.insert('Frequency', {'id': 3, 'label': 'Mensuelle'});
-    await db.insert('Frequency', {'id': 4, 'label': 'Annuelle'});
-    await db.insert('Frequency', {'id': 5, 'label': 'Une fois'});
+  // Seed initial data
+  Future<void> _seedDatabase(Database db) async {
+    // Insert frequencies
+    await db.rawInsert('''
+      INSERT INTO Frequency (id, label) VALUES
+        (1, 'Quotidienne'),
+        (2, 'Hebdomadaire'),
+        (3, 'Mensuelle'),
+        (4, 'Annuelle'),
+        (5, 'Une fois')
+    ''');
+
+    // Insert states
+    await db.rawInsert('''
+      INSERT INTO State (id, label) VALUES
+        (1, 'Non Complété'),
+        (2, 'Partiellement Complété'),
+        (3, 'Complété')
+    ''');
+
+    // Insert routines (optimized multi-line insert)
+    await db.rawInsert('''
+      INSERT INTO Routine (name, startDate, endDate, icon, description, alert, frequencyId, recurrence, days)
+      VALUES
+        ('Routine Matin', '2025-01-01', '2025-01-31', '☀️', 'Commencez votre journée avec de l’énergie.', NULL, 1, 1, '1,2,3,4,5'),
+        ('Routine Soir', '2025-01-01', '2025-01-31', '🌙', 'Relaxez-vous après une longue journée.', NULL, 1, 1, '1,2,3,4,5'),
+        ('Routine Lecture', '2025-01-01', '2025-01-15', '📚', 'Prenez du temps pour lire.', NULL, 3, 1, '6,7'),
+        ('Routine Sport', '2025-01-01', '2025-01-20', '🏋️‍♀️', 'Restez en forme physiquement.', NULL, 2, 2, '1,3,5')
+    ''');
   }
 
-  // Méthodes pour gérer les données des routines
+  // CRUD Operations for Routines
   Future<List<Map<String, dynamic>>> getRoutines() async {
     final db = await database;
     return await db.query('Routine');
@@ -102,7 +129,7 @@ class DatabaseHelper {
     return await db.delete('Routine', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Méthodes pour gérer les données des complétions
+  // CRUD Operations for Completions
   Future<List<Map<String, dynamic>>> getCompletions() async {
     final db = await database;
     return await db.query('Completion');
@@ -121,28 +148,5 @@ class DatabaseHelper {
   Future<int> deleteCompletion(int id) async {
     final db = await database;
     return await db.delete('Completion', where: 'id = ?', whereArgs: [id]);
-  }
-  // Insérer plusieurs routines
-  Future<void> insertFakeRoutines(int count) async {
-    final db = await database;
-    final faker = RoutineFaker();
-    final fakeRoutines = faker.generateFakeRoutines(count);
-
-    Batch batch = db.batch();
-    for (final routine in fakeRoutines) {
-      batch.insert('Routine', {
-        'id': routine.id,
-        'name': routine.name,
-        'startDate': routine.startDate.toIso8601String(),
-        'endDate': routine.endDate?.toIso8601String(),
-        'icon': routine.icon,
-        'description': routine.description,
-        'alert': routine.alert,
-        'frequencyId': routine.frequency.id,
-        'recurrence': routine.recurrence,
-        'days': routine.days.join(','), // Stocké sous forme de chaîne
-      });
-    }
-    await batch.commit();
   }
 }
