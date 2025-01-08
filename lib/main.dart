@@ -6,10 +6,10 @@ import 'package:provider/provider.dart';
 import 'db/database.dart';
 
 void main() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
 
-    // Initialiser la base de données
-    await DatabaseHelper.instance.database;
+  // Initialiser la base de données
+  await DatabaseHelper.instance.database;
 
   runApp(
     MultiProvider(
