@@ -17,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   // Liste des écrans pour chaque onglet
   final List<Widget> _pages = [
     HomeScreen(),
-    RoutinesScreen(),
+    RoutineScreen(),
     StatisticsScreen(),
   ];
 
