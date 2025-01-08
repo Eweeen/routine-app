@@ -8,12 +8,16 @@ class RoutineProvider extends ChangeNotifier {
   Future<void> loadRoutines() async {
     final dbHelper = DatabaseHelper.instance;
     final data = await dbHelper.getRoutines();
-    print('Routines récupérées : $data'); // Vérifiez les données ici
+
     _routines.clear();
-    _routines.addAll(data);
+    _routines.addAll(data.map((routine) {
+      return {
+        ...routine,
+        'date': routine['date'] != null ? DateTime.parse(routine['date']) : null,
+      };
+    }).toList());
     notifyListeners();
   }
-
 
   Future<void> addRoutine(Map<String, dynamic> routine) async {
     final dbHelper = DatabaseHelper.instance;

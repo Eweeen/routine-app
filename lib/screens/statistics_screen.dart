@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/routineProvider.dart';
 import '../widgets/github_style_chart.dart';
 
 class StatisticsScreen extends StatefulWidget {
@@ -12,20 +14,28 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   DateTime startDate = DateTime(2020, 1, 1);
   DateTime endDate = DateTime(2025, 12, 31);
   String selectedRoutine = 'Toutes les routines';
-  final List<String> routines = ['Toutes les routines', 'Routine Matin', 'Routine Soir'];
-
-  List<Map<String, dynamic>> mockRoutineData = [];
 
   @override
   void initState() {
     super.initState();
-    mockRoutineData = _generateMockData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<RoutineProvider>(context, listen: false).loadRoutines();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Filtrer les données selon la routine sélectionnée
-    final filteredData = _filterData();
+    final routineProvider = Provider.of<RoutineProvider>(context);
+
+    if (routineProvider.routines.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final filteredData = _filterData(routineProvider.routines);
 
     return Scaffold(
       appBar: AppBar(
@@ -36,13 +46,19 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           children: [
             // Filtres : Sélection de routine et période
-
-                  DropdownButton<String>(
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
                     value: selectedRoutine,
-                    items: routines.map((routine) {
-                      return DropdownMenuItem(
-                        value: routine,
-                        child: Text(routine),
+                    isExpanded: true,
+                    items: [
+                      'Toutes les routines',
+                      ...routineProvider.routines.map((routine) => routine['name'] as String),
+                    ].map((routineName) {
+                      return DropdownMenuItem<String>(
+                        value: routineName,
+                        child: Text(routineName),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -51,6 +67,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       });
                     },
                   ),
+                ),
                 const SizedBox(width: 16),
                 ElevatedButton(
                   onPressed: () async {
@@ -67,18 +84,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       });
                     }
                   },
-                  child: const Text('Sélectionner une période'),
+                  child: const Text('Période'),
                 ),
-
-
+              ],
+            ),
             const SizedBox(height: 16),
             // Affichage des routines ou du graphique combiné
             Expanded(
               child: selectedRoutine == 'Toutes les routines'
                   ? ListView.builder(
-                itemCount: routines.length - 1, // Ignorer l'option "Toutes les routines"
+                itemCount: routineProvider.routines.length,
                 itemBuilder: (context, index) {
-                  final routineName = routines[index + 1]; // Passer l'index 0
+                  final routine = routineProvider.routines[index];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
                     child: Padding(
@@ -87,7 +104,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            routineName,
+                            routine['name'],
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -97,7 +114,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           GithubStyleChart(
                             startDate: startDate,
                             endDate: endDate,
-                            data: _filterDataForRoutine(routineName),
+                            data: _filterDataForRoutine(routine['name'], routineProvider.routines),
                           ),
                         ],
                       ),
@@ -113,9 +130,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        selectedRoutine == 'Toutes les routines combinées'
-                            ? 'Toutes les routines combinées'
-                            : selectedRoutine,
+                        selectedRoutine,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -138,61 +153,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  // Filtrer les données pour la routine sélectionnée ou toutes combinées
-  List<Map<String, dynamic>> _filterData() {
-    if (selectedRoutine == 'Toutes les routines combinées') {
-      // Combiner toutes les routines ensemble
-      final combinedData = <DateTime, int>{};
-      for (var entry in mockRoutineData) {
-        final date = entry['date'] as DateTime;
-        final state = entry['state'] as RoutineState;
-        combinedData[date] = (combinedData[date] ?? 0) + state.id;
-      }
-
-      return combinedData.entries.map((e) {
-        return {
-          'date': e.key,
-          'state': RoutineState(
-            id: e.value.clamp(0, 3), // Limiter à un maximum de 3 (plus foncé)
-            label: 'Combiné',
-          ),
-        };
-      }).toList();
-    } else if (selectedRoutine == 'Toutes les routines') {
-      return mockRoutineData;
+  List<Map<String, dynamic>> _filterData(List<Map<String, dynamic>> routines) {
+    if (selectedRoutine == 'Toutes les routines') {
+      return routines;
     } else {
-      return _filterDataForRoutine(selectedRoutine);
+      return routines
+          .where((routine) => routine['name'] == selectedRoutine)
+          .toList();
     }
   }
 
-  // Filtrer les données pour une routine spécifique
-  List<Map<String, dynamic>> _filterDataForRoutine(String routineName) {
-    return mockRoutineData.where((entry) {
-      return entry['routine'] == routineName;
-    }).toList();
-  }
-
-  // Générer des données fixes pour le test
-  List<Map<String, dynamic>> _generateMockData() {
-    final List<RoutineState> states = [
-      const RoutineState(id: 1, label: 'Faible'),
-      const RoutineState(id: 2, label: 'Moyen'),
-      const RoutineState(id: 3, label: 'Élevé'),
-    ];
-
-    final List<Map<String, dynamic>> data = [];
-    final routines = ['Routine Matin', 'Routine Soir'];
-
-    for (int i = 0; i < 365 * 5; i++) {
-      final date = DateTime(2020, 1, 1).add(Duration(days: i));
-      final randomState = states[i % states.length];
-      final routineName = routines[i % routines.length];
-      data.add({
-        'date': date,
-        'state': randomState,
-        'routine': routineName,
-      });
-    }
-    return data;
+  List<Map<String, dynamic>> _filterDataForRoutine(String routineName, List<Map<String, dynamic>> routines) {
+    return routines.where((routine) => routine['name'] == routineName).toList();
   }
 }

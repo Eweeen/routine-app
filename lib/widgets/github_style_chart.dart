@@ -21,29 +21,24 @@ class GithubStyleChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Générer tous les jours entre startDate et endDate
-    final allDays = _generateDays(startDate, endDate);
+    if (data.isEmpty) {
+      return const Center(
+        child: Text('Aucune donnée à afficher'),
+      );
+    }
+
+    final days = _generateDays(startDate, endDate);
+    final indexedData = _indexData(data);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Affichage des mois au-dessus
-          Row(
-            children: _buildMonthLabels(allDays),
-          ),
-          const SizedBox(height: 8),
-          // Graphique principal
-          Row(
-            children: _buildWeekColumns(allDays),
-          ),
-        ],
+      child: CustomPaint(
+        painter: GithubChartPainter(days, indexedData),
+        size: Size((days.length / 7 * 18).toDouble(), 120),
       ),
     );
   }
 
-  // Générer une liste de jours entre deux dates
   List<DateTime> _generateDays(DateTime start, DateTime end) {
     final days = <DateTime>[];
     var currentDate = start;
@@ -56,85 +51,61 @@ class GithubStyleChart extends StatelessWidget {
     return days;
   }
 
-  // Construire les étiquettes des mois
-  List<Widget> _buildMonthLabels(List<DateTime> days) {
-    final List<Widget> labels = [];
-    DateTime? currentMonth;
-
-    for (final date in days) {
-      if (currentMonth == null || date.month != currentMonth.month) {
-        labels.add(SizedBox(
-          width: (14 + 4) * 7, // Largeur pour une semaine (14px par case + 4px d'espace)
-          child: Center(
-            child: Text(
-              '${_monthName(date.month)} ${date.year}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ));
-        currentMonth = date;
+  Map<DateTime, RoutineState> _indexData(List<Map<String, dynamic>> data) {
+    final index = <DateTime, RoutineState>{};
+    for (var entry in data) {
+      final date = entry['date'] as DateTime?;
+      final state = entry['state'] as RoutineState?;
+      if (date != null && state != null) {
+        index[date] = state;
       }
     }
-
-    return labels;
+    return index;
   }
+}
 
-  // Construire les colonnes hebdomadaires
-  List<Widget> _buildWeekColumns(List<DateTime> days) {
-    final List<Widget> columns = [];
-    for (int i = 0; i < days.length; i += 7) {
-      final weekDays = days.skip(i).take(7).toList();
-      columns.add(Column(
-        children: weekDays.map((date) {
-          // Trouver l'état du jour dans les données
-          final dayData = data.firstWhere(
-                (d) => d['date'].isAtSameMomentAs(date),
-            orElse: () => {'state': RoutineState(id: 0, label: 'Aucune donnée')},
-          );
+class GithubChartPainter extends CustomPainter {
+  final List<DateTime> days;
+  final Map<DateTime, RoutineState> indexedData;
 
-          final state = dayData['state'] as RoutineState;
+  GithubChartPainter(this.days, this.indexedData);
 
-          return Tooltip(
-            message: '${date.day}/${date.month}/${date.year} : ${state.label}',
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-              width: 14, // Taille compacte pour les cellules
-              height: 14,
-              decoration: BoxDecoration(
-                color: _colorFromValue(state.id),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }).toList(),
-      ));
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final cellSize = 14.0;
+    final gap = 4.0;
+
+    for (int i = 0; i < days.length; i++) {
+      final x = (i ~/ 7) * (cellSize + gap);
+      final y = (i % 7) * (cellSize + gap);
+
+      final date = days[i];
+      final state = indexedData[date] ?? RoutineState(id: 0, label: 'Aucune donnée');
+      paint.color = _colorFromValue(state.id);
+
+      canvas.drawRect(
+        Rect.fromLTWH(x.toDouble(), y.toDouble(), cellSize, cellSize),
+        paint,
+      );
     }
-
-    return columns;
   }
 
-  // Mapper l'état à une couleur uniforme (style GitHub)
   Color _colorFromValue(int value) {
     switch (value) {
       case 0:
-        return const Color(0xFFEBEDF0); // Très clair (vide)
+        return const Color(0xFFEBEDF0);
       case 1:
-        return const Color(0xFF9BE9A8); // Vert clair
+        return const Color(0xFF9BE9A8);
       case 2:
-        return const Color(0xFF40C463); // Vert moyen
+        return const Color(0xFF40C463);
       case 3:
-        return const Color(0xFF30A14E); // Vert foncé
+        return const Color(0xFF30A14E);
       default:
-        return const Color(0xFF216E39); // Très foncé
+        return const Color(0xFF216E39);
     }
   }
 
-  // Obtenir le nom du mois
-  String _monthName(int month) {
-    const months = [
-      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-      'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'
-    ];
-    return months[month - 1];
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
