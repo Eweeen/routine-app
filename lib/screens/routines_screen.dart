@@ -23,9 +23,24 @@ class _RoutineScreenState extends State<RoutineScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes Routines'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
       ),
-      body: routineProvider.routines.isEmpty
+      body: routineProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
+          : routineProvider.routines.isEmpty
+          ? const Center(
+        child: Text(
+          'Aucune routine disponible.',
+          style: TextStyle(fontSize: 16),
+        ),
+      )
           : ListView.builder(
         itemCount: routineProvider.routines.length,
         itemBuilder: (context, index) {
