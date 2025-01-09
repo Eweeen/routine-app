@@ -211,4 +211,10 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete('Completion', where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<void> deleteAllRoutines() async {
+    final db = await database;
+    await db.delete('Routine');
+  }
+
 }

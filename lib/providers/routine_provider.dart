@@ -6,20 +6,21 @@ import '../utils/notificationsHelper.dart';
 
 class RoutineProvider extends ChangeNotifier {
   final List<Map<String, dynamic>> _routines = [];
+  bool _isLoading = true; // Indicateur de chargement
+
   List<Map<String, dynamic>> get routines => _routines;
 
+  bool get isLoading => _isLoading;
+
   Future<void> loadRoutines() async {
+    _isLoading = true; // Début du chargement
+    notifyListeners();
+
     final dbHelper = DatabaseHelper.instance;
     final data = await dbHelper.getRoutines();
 
     _routines.clear();
-    _routines.addAll(data.map((routine) {
-      return {
-        ...routine,
-        'date':
-            routine['date'] != null ? DateTime.parse(routine['date']) : null,
-      };
-    }).toList());
+    _routines.addAll(data.toList());
     notifyListeners();
   }
 
@@ -80,5 +81,11 @@ class RoutineProvider extends ChangeNotifier {
     await dbHelper.deleteRoutine(id);
     await loadRoutines();
 
+  }
+
+  Future<void> deleteAllRoutines() async {
+    final dbHelper = DatabaseHelper.instance;
+    await dbHelper.deleteAllRoutines();
+    await loadRoutines();
   }
 }
