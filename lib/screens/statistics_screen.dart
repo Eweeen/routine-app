@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/routineProvider.dart';
+import '../providers/routine_provider.dart';
 import '../widgets/github_style_chart.dart';
 
 class StatisticsScreen extends StatefulWidget {
@@ -54,7 +54,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     isExpanded: true,
                     items: [
                       'Toutes les routines',
-                      ...routineProvider.routines.map((routine) => routine['name'] as String),
+                      ...routineProvider.routines
+                          .map((routine) => routine['name'] as String),
                     ].map((routineName) {
                       return DropdownMenuItem<String>(
                         value: routineName,
@@ -73,7 +74,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   onPressed: () async {
                     final dateRange = await showDateRangePicker(
                       context: context,
-                      initialDateRange: DateTimeRange(start: startDate, end: endDate),
+                      initialDateRange:
+                          DateTimeRange(start: startDate, end: endDate),
                       firstDate: DateTime(2015),
                       lastDate: DateTime(2030),
                     );
@@ -93,59 +95,60 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Expanded(
               child: selectedRoutine == 'Toutes les routines'
                   ? ListView.builder(
-                itemCount: routineProvider.routines.length,
-                itemBuilder: (context, index) {
-                  final routine = routineProvider.routines[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            routine['name'],
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                      itemCount: routineProvider.routines.length,
+                      itemBuilder: (context, index) {
+                        final routine = routineProvider.routines[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  routine['name'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                GithubStyleChart(
+                                  startDate: startDate,
+                                  endDate: endDate,
+                                  data: _filterDataForRoutine(routine['name'],
+                                      routineProvider.routines),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          GithubStyleChart(
-                            startDate: startDate,
-                            endDate: endDate,
-                            data: _filterDataForRoutine(routine['name'], routineProvider.routines),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              )
+                        );
+                      },
+                    )
                   : Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        selectedRoutine,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              selectedRoutine,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            GithubStyleChart(
+                              startDate: startDate,
+                              endDate: endDate,
+                              data: filteredData,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      GithubStyleChart(
-                        startDate: startDate,
-                        endDate: endDate,
-                        data: filteredData,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ],
         ),
@@ -163,7 +166,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
   }
 
-  List<Map<String, dynamic>> _filterDataForRoutine(String routineName, List<Map<String, dynamic>> routines) {
+  List<Map<String, dynamic>> _filterDataForRoutine(
+      String routineName, List<Map<String, dynamic>> routines) {
     return routines.where((routine) => routine['name'] == routineName).toList();
   }
 }

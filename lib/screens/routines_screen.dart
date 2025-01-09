@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/routineProvider.dart';
+import '../providers/routine_provider.dart';
+
+String formatDate(DateTime date) {
+  return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+}
 
 class RoutineScreen extends StatefulWidget {
   const RoutineScreen({super.key});
@@ -27,39 +31,42 @@ class _RoutineScreenState extends State<RoutineScreen> {
       body: routineProvider.routines.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-        itemCount: routineProvider.routines.length,
-        itemBuilder: (context, index) {
-          final routine = routineProvider.routines[index];
-          return Card(
-            margin: const EdgeInsets.all(8.0),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.teal.withOpacity(0.2),
-                child: Text(routine['icon'] ?? '🔔'),
-              ),
-              title: Text(routine['name']),
-              subtitle: Text(routine['description'] ?? 'Pas de description'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.black),
-                    onPressed: () {
-                      _showRoutineForm(context, routine: routine, isEditing: true);
-                    },
+              itemCount: routineProvider.routines.length,
+              itemBuilder: (context, index) {
+                final routine = routineProvider.routines[index];
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.teal.withOpacity(0.2),
+                      child: Text(routine['icon'] ?? '🔔'),
+                    ),
+                    title: Text(routine['name']),
+                    subtitle:
+                        Text(routine['description'] ?? 'Pas de description'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.black),
+                          onPressed: () {
+                            _showRoutineForm(context,
+                                routine: routine, isEditing: true);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.black),
+                          onPressed: () {
+                            _confirmDelete(
+                                context, routine['id'], routineProvider);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.black),
-                    onPressed: () {
-                      _confirmDelete(context, routine['id'], routineProvider);
-                    },
-                  ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _showRoutineForm(context);
@@ -71,13 +78,15 @@ class _RoutineScreenState extends State<RoutineScreen> {
   }
 
   // Confirmation avant de supprimer une routine
-  void _confirmDelete(BuildContext context, int id, RoutineProvider routineProvider) {
+  void _confirmDelete(
+      BuildContext context, int id, RoutineProvider routineProvider) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmer la suppression'),
-          content: const Text('Êtes-vous sûr de vouloir supprimer cette routine ?'),
+          content:
+              const Text('Êtes-vous sûr de vouloir supprimer cette routine ?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -100,19 +109,28 @@ class _RoutineScreenState extends State<RoutineScreen> {
   }
 
   // Formulaire d'ajout/modification
-  void _showRoutineForm(BuildContext context, {Map<String, dynamic>? routine, bool isEditing = false}) {
-    final routineProvider = Provider.of<RoutineProvider>(context, listen: false);
+  void _showRoutineForm(BuildContext context,
+      {Map<String, dynamic>? routine, bool isEditing = false}) {
+    final routineProvider =
+        Provider.of<RoutineProvider>(context, listen: false);
 
     final nameController = TextEditingController(text: routine?['name'] ?? '');
-    final descriptionController = TextEditingController(text: routine?['description'] ?? '');
-    final iconController = TextEditingController(text: routine?['icon'] ?? '🔔');
-    final startDateController = TextEditingController(text: routine?['startDate'] ?? '');
-    final endDateController = TextEditingController(text: routine?['endDate'] ?? '');
+    final descriptionController =
+        TextEditingController(text: routine?['description'] ?? '');
+    final iconController =
+        TextEditingController(text: routine?['icon'] ?? '🔔');
+    final startDateController =
+        TextEditingController(text: routine?['startDate'] ?? '');
+    final endDateController =
+        TextEditingController(text: routine?['endDate'] ?? '');
 
     int selectedFrequencyId = routine?['frequencyId'] ?? 1;
     int recurrence = routine?['recurrence'] ?? 1;
     List<int> selectedDays = (routine != null && routine['days'] != null)
-        ? (routine['days'] as String).split(',').map((e) => int.parse(e)).toList()
+        ? (routine['days'] as String)
+            .split(',')
+            .map((e) => int.parse(e))
+            .toList()
         : [];
 
     final daysOfWeek = {
@@ -147,7 +165,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 left: 16,
                 right: 16,
                 top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -155,42 +173,58 @@ class _RoutineScreenState extends State<RoutineScreen> {
                   children: [
                     Text(
                       isEditing ? 'Modifier Routine' : 'Nouvelle Routine',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Nom', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: descriptionController,
-                      decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: iconController,
-                      decoration: const InputDecoration(labelText: 'Icône', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Icône', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: startDateController,
-                      decoration: const InputDecoration(labelText: 'Date de début', border: OutlineInputBorder()),
+                    InputDatePickerFormField(
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: DateTime.now(),
+                      onDateSubmitted: (date) {
+                        startDateController.text = formatDate(date);
+                      },
+                      fieldLabelText: 'Date de début',
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: endDateController,
-                      decoration: const InputDecoration(labelText: 'Date de fin', border: OutlineInputBorder()),
+                    const SizedBox(height: 16),
+                    InputDatePickerFormField(
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: DateTime.now(),
+                      onDateSubmitted: (date) {
+                        endDateController.text = formatDate(date);
+                      },
+                      fieldLabelText: 'Date de fin',
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
                       value: selectedFrequencyId,
-                      decoration: const InputDecoration(labelText: 'Fréquence', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Fréquence', border: OutlineInputBorder()),
                       items: frequencies.entries
                           .map((entry) => DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ))
+                                value: entry.key,
+                                child: Text(entry.value),
+                              ))
                           .toList(),
                       onChanged: (value) {
                         setModalState(() {
@@ -200,9 +234,12 @@ class _RoutineScreenState extends State<RoutineScreen> {
                     ),
                     const SizedBox(height: 8),
                     TextField(
-                      controller: TextEditingController(text: recurrence.toString()),
+                      controller:
+                          TextEditingController(text: recurrence.toString()),
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Récurrence', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Récurrence',
+                          border: OutlineInputBorder()),
                       onChanged: (value) {
                         setModalState(() {
                           recurrence = int.parse(value);
@@ -236,7 +273,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
                             selectedDays.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Veuillez remplir tous les champs obligatoires !'),
+                              content: Text(
+                                  'Veuillez remplir tous les champs obligatoires !'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -248,7 +286,9 @@ class _RoutineScreenState extends State<RoutineScreen> {
                           'description': descriptionController.text,
                           'icon': iconController.text,
                           'startDate': startDateController.text,
-                          'endDate': endDateController.text.isEmpty ? null : endDateController.text,
+                          'endDate': endDateController.text.isEmpty
+                              ? null
+                              : endDateController.text,
                           'alert': null,
                           'frequencyId': selectedFrequencyId,
                           'recurrence': recurrence,
@@ -256,14 +296,16 @@ class _RoutineScreenState extends State<RoutineScreen> {
                         };
 
                         if (isEditing) {
-                          await routineProvider.updateRoutine(routine!['id'], newRoutine);
+                          await routineProvider.updateRoutine(
+                              routine!['id'], newRoutine);
                         } else {
                           await routineProvider.addRoutine(newRoutine);
                         }
 
                         Navigator.pop(context);
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black),
                       child: Text(
                         isEditing ? 'Modifier' : 'Ajouter',
                         style: const TextStyle(color: Colors.white),
