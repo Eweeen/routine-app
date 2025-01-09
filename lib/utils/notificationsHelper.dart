@@ -70,7 +70,6 @@ Future<void> scheduleRoutineNotification({
     body,
     tz.TZDateTime.from(nextDate, tz.local),
     notificationDetails,
-    androidAllowWhileIdle: true,
     uiLocalNotificationDateInterpretation:
     UILocalNotificationDateInterpretation.absoluteTime,
     matchDateTimeComponents: DateTimeComponents.time,
