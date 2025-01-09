@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:routine_app/utils/notificationsHelper.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:routine_app/providers/completionProvider.dart';
-import 'package:routine_app/providers/routineProvider.dart';
+import 'package:routine_app/providers/completion_provider.dart';
+import 'package:routine_app/providers/routine_provider.dart';
 import 'package:routine_app/screens/main_screen.dart';
 import 'package:routine_app/db/database.dart';
 
@@ -43,7 +40,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MainScreen(),
+      home: const MainScreen(), // Écran principal
     );
   }
 }

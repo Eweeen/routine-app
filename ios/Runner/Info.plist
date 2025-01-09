@@ -46,12 +46,17 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
-    <array>
-        <string>fetch</string>
-        <string>remote-notification</string>
-    </array>
-    <key>NSUserNotificationUsageDescription</key>
-    <string>Nous utilisons les notifications pour vous rappeler vos routines.</string>
-
+        <array>
+            <string>fetch</string>
+            <string>remote-notification</string>
+        </array>
+        <key>NSUserNotificationUsageDescription</key>
+        <string>Nous utilisons les notifications pour vous rappeler vos routines.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre appareil photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre galerie pour sélectionner des images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre galerie pour enregistrer des images.</string>
 </dict>
 </plist>
