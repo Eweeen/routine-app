@@ -13,9 +13,22 @@ class RoutineProvider extends ChangeNotifier {
     _routines.addAll(data.map((routine) {
       return {
         ...routine,
-        'date': routine['date'] != null ? DateTime.parse(routine['date']) : null,
+        'date':
+            routine['date'] != null ? DateTime.parse(routine['date']) : null,
       };
     }).toList());
+    notifyListeners();
+  }
+
+  Future<void> loadRoutinesByDate(DateTime date) async {
+    final dbHelper = DatabaseHelper.instance;
+
+    // Récupérer les routines correspondant à la date
+    final data = await dbHelper.getRoutinesByDate(date);
+
+    // Mettre à jour les routines dans l'état
+    _routines.clear();
+    _routines.addAll(data.toList());
     notifyListeners();
   }
 

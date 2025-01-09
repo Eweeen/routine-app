@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final _databaseName = "routines_app.db";
-  static final _databaseVersion = 1;
+  static final _databaseVersion = 2;
 
   // Singleton instance
   DatabaseHelper._privateConstructor();
@@ -68,6 +68,7 @@ class DatabaseHelper {
         description TEXT,
         image TEXT,
         routineId INTEGER NOT NULL,
+        date TEXT NOT NULL,
         FOREIGN KEY (stateId) REFERENCES State (id),
         FOREIGN KEY (routineId) REFERENCES Routine (id)
       )
@@ -114,6 +115,65 @@ class DatabaseHelper {
     return await db.query('Routine');
   }
 
+  Future<List<Map<String, dynamic>>> getRoutinesByDate(DateTime date) async {
+    final db = await instance.database;
+
+    // Obtenir le jour de la semaine actuel (1 pour lundi, 7 pour dimanche)
+    final currentDay = date.weekday;
+
+    // Formater la date au format 'YYYY-MM-DD'
+    final formattedDate =
+        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+    final result = await db.rawQuery('''
+      SELECT * FROM Routine
+      WHERE (
+        -- Filtrer par fréquence quotidienne
+        (frequencyId = 1)
+        
+        OR
+
+        -- Filtrer par fréquence hebdomadaire (vérifie le jour dans la liste)
+        (frequencyId = 2 AND instr(days, ?))
+
+        OR
+
+        -- Filtrer par fréquence mensuelle (vérifie le jour du mois)
+        (frequencyId = 3 AND recurrence > 0 AND CAST(strftime('%d', ?) AS INTEGER) % recurrence = 0)
+
+        OR
+
+        -- Filtrer par fréquence annuelle (vérifie le mois et le jour)
+        (frequencyId = 4 AND strftime('%m-%d', ?) = strftime('%m-%d', startDate))
+
+        OR
+
+        -- Filtrer par fréquence "une fois" (vérifie la date exacte)
+        (frequencyId = 5 AND startDate = ?)
+      )
+      AND (
+        -- Vérifier si la date est dans l'intervalle de la routine
+        (? >= startDate AND (endDate IS NULL OR ? <= endDate))
+      )
+      AND NOT EXISTS (
+        -- Exclure les routines déjà complétées
+        SELECT 1 FROM Completion
+        WHERE Completion.routineId = Routine.id
+          AND Completion.date = ?
+      )
+    ''', [
+      currentDay.toString(), // Pour fréquence hebdomadaire
+      formattedDate, // Pour fréquence mensuelle
+      formattedDate, // Pour fréquence annuelle
+      formattedDate, // Pour fréquence "une fois"
+      formattedDate, // Filtrer par date de début
+      formattedDate, // Filtrer par date de fin
+      formattedDate, // Exclure les routines déjà complétées
+    ]);
+
+    return result;
+  }
+
   Future<int> insertRoutine(Map<String, dynamic> routine) async {
     final db = await database;
     return await db.insert('Routine', routine);
@@ -121,7 +181,8 @@ class DatabaseHelper {
 
   Future<int> updateRoutine(int id, Map<String, dynamic> routine) async {
     final db = await database;
-    return await db.update('Routine', routine, where: 'id = ?', whereArgs: [id]);
+    return await db
+        .update('Routine', routine, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteRoutine(int id) async {
@@ -142,7 +203,8 @@ class DatabaseHelper {
 
   Future<int> updateCompletion(int id, Map<String, dynamic> completion) async {
     final db = await database;
-    return await db.update('Completion', completion, where: 'id = ?', whereArgs: [id]);
+    return await db
+        .update('Completion', completion, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteCompletion(int id) async {
