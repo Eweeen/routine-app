@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/routine_provider.dart';
 
+String formatDate(DateTime date) {
+  return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+}
+
 class RoutineScreen extends StatefulWidget {
   const RoutineScreen({super.key});
 
@@ -161,7 +165,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 left: 16,
                 right: 16,
                 top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -192,18 +196,24 @@ class _RoutineScreenState extends State<RoutineScreen> {
                           labelText: 'Icône', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: startDateController,
-                      decoration: const InputDecoration(
-                          labelText: 'Date de début',
-                          border: OutlineInputBorder()),
+                    InputDatePickerFormField(
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: DateTime.now(),
+                      onDateSubmitted: (date) {
+                        startDateController.text = formatDate(date);
+                      },
+                      fieldLabelText: 'Date de début',
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: endDateController,
-                      decoration: const InputDecoration(
-                          labelText: 'Date de fin',
-                          border: OutlineInputBorder()),
+                    const SizedBox(height: 16),
+                    InputDatePickerFormField(
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: DateTime.now(),
+                      onDateSubmitted: (date) {
+                        endDateController.text = formatDate(date);
+                      },
+                      fieldLabelText: 'Date de fin',
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(

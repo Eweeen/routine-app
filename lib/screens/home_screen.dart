@@ -69,8 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           _showRoutineForm(context);
         },
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -85,6 +85,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final startDateController = TextEditingController(text: '');
     final endDateController = TextEditingController(text: '');
 
+    int selectedFrequencyId = 1;
+    int recurrence = 1;
+    List<int> selectedDays = [];
+
+    final daysOfWeek = {
+      1: 'Lundi',
+      2: 'Mardi',
+      3: 'Mercredi',
+      4: 'Jeudi',
+      5: 'Vendredi',
+      6: 'Samedi',
+      7: 'Dimanche',
+    };
+
+    final frequencies = {
+      1: 'Quotidienne',
+      2: 'Hebdomadaire',
+      3: 'Mensuelle',
+      4: 'Annuelle',
+      5: 'Une fois',
+    };
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -92,87 +114,159 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Nouvelle Routine',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                key: const ValueKey('name'),
-                controller: nameController,
-                decoration: const InputDecoration(
-                    labelText: 'Nom', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                key: const ValueKey('description'),
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                    labelText: 'Description', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                key: const ValueKey('icon'),
-                controller: iconController,
-                decoration: const InputDecoration(
-                    labelText: 'Icône', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              InputDatePickerFormField(
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-                initialDate: DateTime.now(),
-                onDateSubmitted: (date) {
-                  startDateController.text = formatDate(date);
-                },
-                fieldLabelText: 'Date de début',
-              ),
-              const SizedBox(height: 16),
-              InputDatePickerFormField(
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-                initialDate: DateTime.now(),
-                onDateSubmitted: (date) {
-                  endDateController.text = formatDate(date);
-                },
-                fieldLabelText: 'Date de fin',
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  final newRoutine = {
-                    'name': nameController.text,
-                    'description': descriptionController.text,
-                    'icon': iconController.text,
-                    'startDate': startDateController.text,
-                    'endDate': endDateController.text.isEmpty
-                        ? null
-                        : endDateController.text,
-                    'alert': null,
-                    'frequencyId': 1,
-                    'recurrence': 1,
-                    'days': '1,2,3,4,5',
-                  };
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Nouvelle Routine',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                          labelText: 'Nom', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: iconController,
+                      decoration: const InputDecoration(
+                          labelText: 'Icône', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    InputDatePickerFormField(
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: DateTime.now(),
+                      onDateSubmitted: (date) {
+                        startDateController.text = formatDate(date);
+                      },
+                      fieldLabelText: 'Date de début',
+                    ),
+                    const SizedBox(height: 16),
+                    InputDatePickerFormField(
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDate: DateTime.now(),
+                      onDateSubmitted: (date) {
+                        endDateController.text = formatDate(date);
+                      },
+                      fieldLabelText: 'Date de fin',
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      value: selectedFrequencyId,
+                      decoration: const InputDecoration(
+                          labelText: 'Fréquence', border: OutlineInputBorder()),
+                      items: frequencies.entries
+                          .map((entry) => DropdownMenuItem(
+                                value: entry.key,
+                                child: Text(entry.value),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          selectedFrequencyId = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller:
+                          TextEditingController(text: recurrence.toString()),
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'Récurrence',
+                          border: OutlineInputBorder()),
+                      onChanged: (value) {
+                        setModalState(() {
+                          recurrence = int.parse(value);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8.0,
+                      children: daysOfWeek.entries.map((entry) {
+                        return ChoiceChip(
+                          label: Text(entry.value),
+                          selected: selectedDays.contains(entry.key),
+                          onSelected: (selected) {
+                            setModalState(() {
+                              if (selected) {
+                                selectedDays.add(entry.key);
+                              } else {
+                                selectedDays.remove(entry.key);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (nameController.text.isEmpty ||
+                            descriptionController.text.isEmpty ||
+                            selectedDays.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Veuillez remplir tous les champs obligatoires !'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
 
-                  await routineProvider.addRoutine(newRoutine);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                child: Text('Ajouter'),
+                        final newRoutine = {
+                          'name': nameController.text,
+                          'description': descriptionController.text,
+                          'icon': iconController.text,
+                          'startDate': startDateController.text,
+                          'endDate': endDateController.text.isEmpty
+                              ? null
+                              : endDateController.text,
+                          'alert': null,
+                          'frequencyId': selectedFrequencyId,
+                          'recurrence': recurrence,
+                          'days': selectedDays.join(','),
+                        };
+
+                        await routineProvider.addRoutine(newRoutine);
+
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black),
+                      child: Text(
+                        'Ajouter',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -202,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 left: 16,
                 right: 16,
                 top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -324,8 +418,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.pop(context);
                     },
                     style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                    child: const Text('Valider'),
+                        ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                    child: Text(
+                      'Ajouter',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
