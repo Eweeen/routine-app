@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:routine_app/providers/completion_provider.dart';
 import 'package:routine_app/providers/routine_provider.dart';
 import 'package:routine_app/screens/main_screen.dart';
+import 'package:routine_app/screens/settings_screen.dart'; // Import de la page Paramètres
 import 'package:provider/provider.dart';
 import 'db/database.dart';
 
@@ -33,6 +34,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: const MainScreen(), // Écran principal
+      routes: {
+        '/settings': (context) => const SettingsScreen(), // Route pour Paramètres
+      },
     );
   }
 }
