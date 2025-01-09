@@ -3,6 +3,7 @@ import 'package:routine_app/providers/completion_provider.dart';
 import 'package:routine_app/providers/routine_provider.dart';
 import 'package:routine_app/screens/main_screen.dart';
 import 'package:routine_app/db/database.dart';
+import 'package:routine_app/utils/notificationsHelper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
