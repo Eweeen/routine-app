@@ -23,7 +23,6 @@ class _RoutineScreenState extends State<RoutineScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes Routines'),
-        backgroundColor: Colors.teal,
       ),
       body: routineProvider.routines.isEmpty
           ? const Center(child: CircularProgressIndicator())
@@ -44,13 +43,13 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    icon: const Icon(Icons.edit, color: Colors.black),
                     onPressed: () {
                       _showRoutineForm(context, routine: routine, isEditing: true);
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
+                    icon: const Icon(Icons.delete, color: Colors.black),
                     onPressed: () {
                       routineProvider.deleteRoutine(routine['id']);
                     },
@@ -65,8 +64,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
         onPressed: () {
           _showRoutineForm(context);
         },
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -80,6 +79,30 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final startDateController = TextEditingController(text: routine?['startDate'] ?? '');
     final endDateController = TextEditingController(text: routine?['endDate'] ?? '');
 
+    int selectedFrequencyId = routine?['frequencyId'] ?? 1;
+    int recurrence = routine?['recurrence'] ?? 1;
+    List<int> selectedDays = (routine != null && routine['days'] != null)
+        ? (routine['days'] as String).split(',').map((e) => int.parse(e)).toList()
+        : [];
+
+    final daysOfWeek = {
+      1: 'Lundi',
+      2: 'Mardi',
+      3: 'Mercredi',
+      4: 'Jeudi',
+      5: 'Vendredi',
+      6: 'Samedi',
+      7: 'Dimanche',
+    };
+
+    final frequencies = {
+      1: 'Quotidienne',
+      2: 'Hebdomadaire',
+      3: 'Mensuelle',
+      4: 'Annuelle',
+      5: 'Une fois',
+    };
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -87,73 +110,123 @@ class _RoutineScreenState extends State<RoutineScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isEditing ? 'Modifier Routine' : 'Nouvelle Routine',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: iconController,
-                decoration: const InputDecoration(labelText: 'Icône', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: startDateController,
-                decoration: const InputDecoration(labelText: 'Date de début', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: endDateController,
-                decoration: const InputDecoration(labelText: 'Date de fin', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  final newRoutine = {
-                    'name': nameController.text,
-                    'description': descriptionController.text,
-                    'icon': iconController.text,
-                    'startDate': startDateController.text,
-                    'endDate': endDateController.text.isEmpty ? null : endDateController.text,
-                    'alert': null,
-                    'frequencyId': 1,
-                    'recurrence': 1,
-                    'days': '1,2,3,4,5',
-                  };
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isEditing ? 'Modifier Routine' : 'Nouvelle Routine',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: iconController,
+                    decoration: const InputDecoration(labelText: 'Icône', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: startDateController,
+                    decoration: const InputDecoration(labelText: 'Date de début', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: endDateController,
+                    decoration: const InputDecoration(labelText: 'Date de fin', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int>(
+                    value: selectedFrequencyId,
+                    decoration: const InputDecoration(labelText: 'Fréquence', border: OutlineInputBorder()),
+                    items: frequencies.entries
+                        .map((entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      setModalState(() {
+                        selectedFrequencyId = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: TextEditingController(text: recurrence.toString()),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Récurrence', border: OutlineInputBorder()),
+                    onChanged: (value) {
+                      setModalState(() {
+                        recurrence = int.parse(value);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8.0,
+                    children: daysOfWeek.entries.map((entry) {
+                      return ChoiceChip(
+                        label: Text(entry.value),
+                        selected: selectedDays.contains(entry.key),
+                        onSelected: (selected) {
+                          setModalState(() {
+                            if (selected) {
+                              selectedDays.add(entry.key);
+                            } else {
+                              selectedDays.remove(entry.key);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final newRoutine = {
+                        'name': nameController.text,
+                        'description': descriptionController.text,
+                        'icon': iconController.text,
+                        'startDate': startDateController.text,
+                        'endDate': endDateController.text.isEmpty ? null : endDateController.text,
+                        'alert': null,
+                        'frequencyId': selectedFrequencyId,
+                        'recurrence': recurrence,
+                        'days': selectedDays.join(','),
+                      };
 
-                  if (isEditing) {
-                    await routineProvider.updateRoutine(routine!['id'], newRoutine);
-                  } else {
-                    await routineProvider.addRoutine(newRoutine);
-                  }
+                      if (isEditing) {
+                        await routineProvider.updateRoutine(routine!['id'], newRoutine);
+                      } else {
+                        await routineProvider.addRoutine(newRoutine);
+                      }
 
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                child: Text(isEditing ? 'Modifier' : 'Ajouter'),
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                    child: Text(isEditing ? 'Modifier' : 'Ajouter'),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
